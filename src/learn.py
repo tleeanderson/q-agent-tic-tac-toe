@@ -3,99 +3,99 @@ import sys
 import os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from src.common import get_action, is_game_over, add_to_value, add_to_frequency, \
-    rewardFunction, getMinMaxByBoard, O, get_actions, invoke_action, get_turn, \
+    reward_function, get_min_max_by_board, O, get_actions, invoke_action, get_turn, \
     generate_board, X, machine_turn, write_state_act_value_file
-from src.perm_tester import testQAgent, resetGlobals
+from src.perm_tester import test_q_agent, reset_globals
 
 NUM_GAMES = 2000000
 DISCOUNT = 1
 
-def updateStateActValue(currentBoard, nextBoard, nextReward, stateActValue, discount, turn):
-    currentAction = get_action(currentBoard, nextBoard)
-    if nextBoard != () and is_game_over(nextBoard):
-        stateActValue[(currentBoard, currentAction)] += add_to_value(stateActValue[(currentBoard, currentAction)], nextReward);
+def update_state_act_value(current_board, next_board, next_reward, state_act_value, discount, turn):
+    current_action = get_action(current_board, next_board)
+    if next_board != () and is_game_over(next_board):
+        state_act_value[(current_board, current_action)] += add_to_value(state_act_value[(current_board, current_action)], next_reward)
 
-    if currentBoard != None and currentAction != None:
-        stateActValue[(currentBoard, currentAction)] += add_to_frequency(stateActValue[(currentBoard, currentAction)], 1)
+    if current_board != None and current_action != None:
+        state_act_value[(current_board, current_action)] += add_to_frequency(state_act_value[(current_board, current_action)], 1)
 
-        minMax = rewardFunction(nextBoard) if is_game_over(nextBoard) else getMinMaxByBoard(nextBoard, stateActValue, max if turn == O else min)
-        newValue = (stepSizeFunc(stateActValue[(currentBoard, currentAction)][1])
-            * ((nextReward + discount * minMax) - stateActValue[(currentBoard, currentAction)][0]))
+        minMax = reward_function(next_board) if is_game_over(next_board) else get_min_max_by_board(next_board, state_act_value, max if turn == O else min)
+        newValue = (stepSizeFunc(state_act_value[(current_board, current_action)][1])
+                    * ((next_reward + discount * minMax) - state_act_value[(current_board, current_action)][0]))
 
-        stateActValue[(currentBoard, currentAction)] = add_to_value(stateActValue[(currentBoard, currentAction)], newValue)
+        state_act_value[(current_board, current_action)] = add_to_value(state_act_value[(current_board, current_action)], newValue)
 
 def stepSizeFunc(n):
     return 60 / float((59 + (1 if n == 0 else n)))
 
 #(value, frequency)
-def getStateAction(allBoards):
+def get_state_action(all_boards):
     result = {}
-    for board in allBoards:
+    for board in all_boards:
         actions = get_actions(board)
         for act in actions:
             result[(board, act)] = (0, 0)
     return result
 
-def getAllBoards(board, turn, allBoards):
-    boardActions = get_actions(board)
-    while boardActions != []:
-        root = invoke_action(boardActions.pop(), turn, board)
-        allBoards.add(root)
+def get_all_boards(board, turn, all_boards):
+    board_actions = get_actions(board)
+    while board_actions != []:
+        root = invoke_action(board_actions.pop(), turn, board)
+        all_boards.add(root)
         if is_game_over(root):
             continue
-        getAllBoards(root, get_turn(turn), allBoards)
+        get_all_boards(root, get_turn(turn), all_boards)
 
-def playGame(stateActValue, machine1, machine2):
+def play_game(state_act_value, machine1, machine2):
     board = generate_board()
     turn = machine1 if machine1 == X else machine2
-    gameOver = False;
-    while not gameOver:
+    game_over = False
+    while not game_over:
         if turn == machine1:
-            newBoard = machine_turn(board, stateActValue, machine1, True)
+            new_board = machine_turn(board, state_act_value, machine1, True)
         else:
-            newBoard = machine_turn(board, stateActValue, machine2, True)
+            new_board = machine_turn(board, state_act_value, machine2, True)
 
         #learn from move
-        updateStateActValue(board, newBoard, rewardFunction(newBoard), stateActValue, DISCOUNT, turn)
+        update_state_act_value(board, new_board, reward_function(new_board), state_act_value, DISCOUNT, turn)
 
-        board = newBoard
-        gameOver = is_game_over(board)
-        if not gameOver:
+        board = new_board
+        game_over = is_game_over(board)
+        if not game_over:
             turn = get_turn(turn)
 
-def getStateActValue(allBoards):
-    stateActValue = getStateAction(allBoards)
+def get_state_act_value(all_boards):
+    state_act_value = get_state_action(all_boards)
     machine1 = X
     machine2 = O
 
     for i in range(0, NUM_GAMES):
         if i % 10000 == 0:
-            print "I'm %f percent done playing with myself" % ((float(i) / NUM_GAMES) * 100)
-        playGame(stateActValue, machine1, machine2)
+            print("I'm %f percent done playing myself" % ((float(i) / NUM_GAMES) * 100))
+        play_game(state_act_value, machine1, machine2)
 
-    return stateActValue
+    return state_act_value
 
 def learn():
-    isBeatable = True
-    numTrials = 0
-    emptyBoard = generate_board()
-    allBoards = set([])
-    allBoards.add(emptyBoard)
-    getAllBoards(emptyBoard, X, allBoards)
-    resetGlobals() #defensive to make sure we have a clean slate
-    while isBeatable:
-        numTrials += 1
-        print "Testing agent...on trial %d" % (numTrials)
-        stateActValue = getStateActValue(allBoards)
-        isBeatable = testQAgent(stateActValue, X, O)
-        resetGlobals()
-        if isBeatable:
+    is_beatable = True
+    num_trials = 0
+    empty_board = generate_board()
+    all_boards = set([])
+    all_boards.add(empty_board)
+    get_all_boards(empty_board, X, all_boards)
+    reset_globals() #defensive to make sure we have a clean slate
+    while is_beatable:
+        num_trials += 1
+        print("Testing agent...on trial %d" % (num_trials))
+        state_act_value = get_state_act_value(all_boards)
+        is_beatable = test_q_agent(state_act_value, X, O)
+        reset_globals()
+        if is_beatable:
             #skip next test because agent lost as X
             continue
-        isBeatable = testQAgent(stateActValue, O, X)
-        if isBeatable:
-            resetGlobals()
+        is_beatable = test_q_agent(state_act_value, O, X)
+        if is_beatable:
+            reset_globals()
 
-    write_state_act_value_file(stateActValue)
+    write_state_act_value_file(state_act_value)
 
 learn()

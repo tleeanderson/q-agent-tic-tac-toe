@@ -2,7 +2,7 @@
 from src.common import generate_board, X, is_game_over, is_win, is_cat, machine_turn, \
     get_actions, get_turn, invoke_action
 
-def resetGlobals():
+def reset_globals():
     global Q_AGENT_WINS
     Q_AGENT_WINS = 0
 
@@ -16,7 +16,7 @@ PERM_AGENT_WINS = 0
 Q_AGENT_WINS = 0
 CAT_GAMES = 0
 
-def testQAgent(stateActValue, machine, permAgent):
+def test_q_agent(stateActValue, machine, permAgent):
     testAgent(stateActValue, generate_board(), machine, permAgent, X)
     print "Q-Agent as %s -> Q-Agent: %d\tPermutation Agent: %d\tCat: %d" % (machine, Q_AGENT_WINS, PERM_AGENT_WINS, CAT_GAMES)
     return PERM_AGENT_WINS > 0

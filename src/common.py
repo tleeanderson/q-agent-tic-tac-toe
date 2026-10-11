@@ -71,14 +71,14 @@ def machine_turn(board, state_act_value, machine, learning):
 
 def get_action(prev_board, current_board):
     result = None
-    if prev_board != None:
+    if prev_board is not None:
         for idx, ele in enumerate(prev_board):
             if ele != current_board[idx]:
                 result = idx
                 break
     return result
 
-def rewardFunction(board):
+def reward_function(board):
     if is_win(board, X):
         return WIN_REWARD
     elif is_win(board, O):
@@ -88,7 +88,7 @@ def rewardFunction(board):
     else:
         return NON_TERM_REWARD
 
-def getMinMaxByBoard(board, dictionary, minMax):
+def get_min_max_by_board(board, dictionary, minMax):
     actions = get_actions(board);
     values = set()
     for action in actions:
