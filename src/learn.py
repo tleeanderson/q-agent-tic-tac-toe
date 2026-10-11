@@ -2,27 +2,27 @@
 import sys
 import os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from src.common import getAction, isGameOver, addToValue, addToFrequency, \
-    rewardFunction, getMinMaxByBoard, O, getActions, invokeAction, getTurn, \
-    generateBoard, X, machineTurn, writeStateActValueFile
+from src.common import get_action, is_game_over, add_to_value, add_to_frequency, \
+    rewardFunction, getMinMaxByBoard, O, get_actions, invoke_action, get_turn, \
+    generate_board, X, machine_turn, write_state_act_value_file
 from src.perm_tester import testQAgent, resetGlobals
 
 NUM_GAMES = 2000000
 DISCOUNT = 1
 
 def updateStateActValue(currentBoard, nextBoard, nextReward, stateActValue, discount, turn):
-    currentAction = getAction(currentBoard, nextBoard)
-    if nextBoard != () and isGameOver(nextBoard):
-        stateActValue[(currentBoard, currentAction)] += addToValue(stateActValue[(currentBoard, currentAction)], nextReward);
-        
-    if currentBoard != None and currentAction != None:
-        stateActValue[(currentBoard, currentAction)] += addToFrequency(stateActValue[(currentBoard, currentAction)], 1)
+    currentAction = get_action(currentBoard, nextBoard)
+    if nextBoard != () and is_game_over(nextBoard):
+        stateActValue[(currentBoard, currentAction)] += add_to_value(stateActValue[(currentBoard, currentAction)], nextReward);
 
-        minMax = rewardFunction(nextBoard) if isGameOver(nextBoard) else getMinMaxByBoard(nextBoard, stateActValue, max if turn == O else min)
-        newValue = (stepSizeFunc(stateActValue[(currentBoard, currentAction)][1]) 
+    if currentBoard != None and currentAction != None:
+        stateActValue[(currentBoard, currentAction)] += add_to_frequency(stateActValue[(currentBoard, currentAction)], 1)
+
+        minMax = rewardFunction(nextBoard) if is_game_over(nextBoard) else getMinMaxByBoard(nextBoard, stateActValue, max if turn == O else min)
+        newValue = (stepSizeFunc(stateActValue[(currentBoard, currentAction)][1])
             * ((nextReward + discount * minMax) - stateActValue[(currentBoard, currentAction)][0]))
-        
-        stateActValue[(currentBoard, currentAction)] = addToValue(stateActValue[(currentBoard, currentAction)], newValue)
+
+        stateActValue[(currentBoard, currentAction)] = add_to_value(stateActValue[(currentBoard, currentAction)], newValue)
 
 def stepSizeFunc(n):
     return 60 / float((59 + (1 if n == 0 else n)))
@@ -31,54 +31,54 @@ def stepSizeFunc(n):
 def getStateAction(allBoards):
     result = {}
     for board in allBoards:
-        actions = getActions(board)
+        actions = get_actions(board)
         for act in actions:
             result[(board, act)] = (0, 0)
     return result
 
 def getAllBoards(board, turn, allBoards):
-    boardActions = getActions(board)
+    boardActions = get_actions(board)
     while boardActions != []:
-        root = invokeAction(boardActions.pop(), turn, board)
+        root = invoke_action(boardActions.pop(), turn, board)
         allBoards.add(root)
-        if isGameOver(root):
+        if is_game_over(root):
             continue
-        getAllBoards(root, getTurn(turn), allBoards)
+        getAllBoards(root, get_turn(turn), allBoards)
 
 def playGame(stateActValue, machine1, machine2):
-    board = generateBoard()
-    turn = machine1 if machine1 == X else machine2 
+    board = generate_board()
+    turn = machine1 if machine1 == X else machine2
     gameOver = False;
     while not gameOver:
         if turn == machine1:
-            newBoard = machineTurn(board, stateActValue, machine1, True)
+            newBoard = machine_turn(board, stateActValue, machine1, True)
         else:
-            newBoard = machineTurn(board, stateActValue, machine2, True)
-        
-        #learn from move  
+            newBoard = machine_turn(board, stateActValue, machine2, True)
+
+        #learn from move
         updateStateActValue(board, newBoard, rewardFunction(newBoard), stateActValue, DISCOUNT, turn)
-        
+
         board = newBoard
-        gameOver = isGameOver(board)
+        gameOver = is_game_over(board)
         if not gameOver:
-            turn = getTurn(turn)
+            turn = get_turn(turn)
 
 def getStateActValue(allBoards):
     stateActValue = getStateAction(allBoards)
     machine1 = X
     machine2 = O
-    
+
     for i in range(0, NUM_GAMES):
         if i % 10000 == 0:
             print "I'm %f percent done playing with myself" % ((float(i) / NUM_GAMES) * 100)
-        playGame(stateActValue, machine1, machine2) 
-        
+        playGame(stateActValue, machine1, machine2)
+
     return stateActValue
 
 def learn():
     isBeatable = True
     numTrials = 0
-    emptyBoard = generateBoard()
+    emptyBoard = generate_board()
     allBoards = set([])
     allBoards.add(emptyBoard)
     getAllBoards(emptyBoard, X, allBoards)
@@ -95,7 +95,7 @@ def learn():
         isBeatable = testQAgent(stateActValue, O, X)
         if isBeatable:
             resetGlobals()
-            
-    writeStateActValueFile(stateActValue)
+
+    write_state_act_value_file(stateActValue)
 
 learn()

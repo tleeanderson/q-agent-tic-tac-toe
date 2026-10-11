@@ -1,14 +1,14 @@
 #!/usr/bin/python
-from src.common import generateBoard, X, isGameOver, isWin, isCat, machineTurn, \
-    getActions, getTurn, invokeAction
+from src.common import generate_board, X, is_game_over, is_win, is_cat, machine_turn, \
+    get_actions, get_turn, invoke_action
 
 def resetGlobals():
     global Q_AGENT_WINS
     Q_AGENT_WINS = 0
-    
+
     global PERM_AGENT_WINS
     PERM_AGENT_WINS = 0
-    
+
     global CAT_GAMES
     CAT_GAMES = 0
 
@@ -17,7 +17,7 @@ Q_AGENT_WINS = 0
 CAT_GAMES = 0
 
 def testQAgent(stateActValue, machine, permAgent):
-    testAgent(stateActValue, generateBoard(), machine, permAgent, X)
+    testAgent(stateActValue, generate_board(), machine, permAgent, X)
     print "Q-Agent as %s -> Q-Agent: %d\tPermutation Agent: %d\tCat: %d" % (machine, Q_AGENT_WINS, PERM_AGENT_WINS, CAT_GAMES)
     return PERM_AGENT_WINS > 0
 
@@ -25,25 +25,25 @@ def testAgent(stateActValue, initialBoard, machine, permAgent, turn):
     newBoard = initialBoard
     gameOver = False
     while not gameOver:
-        gameOver = isGameOver(newBoard)
+        gameOver = is_game_over(newBoard)
         if gameOver:
-            if isWin(newBoard, permAgent):
+            if is_win(newBoard, permAgent):
                 global PERM_AGENT_WINS
                 PERM_AGENT_WINS += 1
-            elif isWin(newBoard, machine):
+            elif is_win(newBoard, machine):
                 global Q_AGENT_WINS
                 Q_AGENT_WINS += 1
-            elif isCat(newBoard):
+            elif is_cat(newBoard):
                 global CAT_GAMES
                 CAT_GAMES += 1
         else:
             if turn == machine:
-                newBoard = machineTurn(newBoard, stateActValue, machine, False)
+                newBoard = machine_turn(newBoard, stateActValue, machine, False)
             else:
-                actions = getActions(newBoard)
+                actions = get_actions(newBoard)
                 saveBoard = newBoard
-                changeTurn = getTurn(turn)
+                changeTurn = get_turn(turn)
                 for act in actions:
-                    newBoard = invokeAction(act, permAgent, saveBoard)
+                    newBoard = invoke_action(act, permAgent, saveBoard)
                     testAgent(stateActValue, newBoard, machine, permAgent, changeTurn)
-            turn = getTurn(turn)
+            turn = get_turn(turn)

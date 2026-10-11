@@ -14,103 +14,104 @@ NON_TERM_REWARD = 0
 LOSS_REWARD = -99
 STATE_ACT_VALUE_FILE = getcwd() + "/../data/state.dat"
 
-def addToFrequency(tup, value):
+def add_to_frequency(tup, value):
     return (tup[0], tup[1] + value)
 
-def addToValue(tup, value):
+def add_to_value(tup, value):
     return (tup[0] + value, tup[1])
 
-def loadStateActValueFile():
-    stateActValue = None
+def load_state_act_value_file():
+    state_act_value = None
     try:
         handle = open(STATE_ACT_VALUE_FILE, "rb")
     except IOError:
-        print "ERROR: %s file does not exist." % (STATE_ACT_VALUE_FILE)
+        print("ERROR: %s file does not exist." % (STATE_ACT_VALUE_FILE))
     else:
-        stateActValue = pickle.load(handle)
-    
-    return stateActValue
+        state_act_value = pickle.load(handle)
 
-def writeStateActValueFile(stateActValue):
+    return state_act_value
+
+def write_state_act_value_file(state_act_value):
     try:
         handle = open(STATE_ACT_VALUE_FILE, "wb")
     except IOError:
-        print "ERROR: when opening %s for write" % (STATE_ACT_VALUE_FILE)
+        print("ERROR: when opening %s for write" % (STATE_ACT_VALUE_FILE))
     else:
-        pickle.dump(stateActValue, handle)
-        
+        pickle.dump(state_act_value, handle)
 
-def getBestMove(board, stateActValue, minMax):
-    actions = getActions(board)
-    actionVals = {}
+
+def get_best_move(board, state_act_value, min_max):
+    actions = get_actions(board)
+    action_vals = {}
     result = None
     for act in actions:
-        actionVals[stateActValue[(board, act)][0]] = act
+        action_vals[state_act_value[(board, act)][0]] = act
 
-    if len(actionVals) == 1:
+    if len(action_vals) == 1:
         #all of the actions are equal so choose at random
-        result = actions[randint(0, len(actions) - 1)] 
+        result = actions[randint(0, len(actions) - 1)]
     else:
         #hashed by value of action so return min/max key
-        result = actionVals[minMax(actionVals.keys())]
-               
+        result = action_vals[min_max(action_vals.keys())]
+
     return result
 
-def machineTurn(board, stateActValue, machine, learning):
+def machine_turn(board, state_act_value, machine, learning):
     action = None
     if learning:
         if randint(0, 99) in range(0, 12): #12 percent chance to move randomly
-            possibles = getActions(board)
+            possibles = get_actions(board)
             action = possibles[randint(0, len(possibles) - 1)]
         else:
-            action = getBestMove(board, stateActValue, min if machine == O else max)
+            action = get_best_move(board, state_act_value, min if machine == O else max)
     else:
-        action = getBestMove(board, stateActValue, min if machine == O else max)
-        
-    return invokeAction(action, machine, board) 
+        action = get_best_move(board, state_act_value, min if machine == O else max)
 
-def getAction(prevBoard, currentBoard):
+    return invoke_action(action, machine, board)
+
+def get_action(prev_board, current_board):
     result = None
-    if prevBoard != None:
-        for idx, ele in enumerate(prevBoard):
-            if ele != currentBoard[idx]:
+    if prev_board != None:
+        for idx, ele in enumerate(prev_board):
+            if ele != current_board[idx]:
                 result = idx
                 break
     return result
 
 def rewardFunction(board):
-    if isWin(board, X):
+    if is_win(board, X):
         return WIN_REWARD
-    elif isWin(board, O):
+    elif is_win(board, O):
         return LOSS_REWARD
-    elif isCat(board):
+    elif is_cat(board):
         return CAT_REWARD
     else:
         return NON_TERM_REWARD
 
 def getMinMaxByBoard(board, dictionary, minMax):
-    actions = getActions(board);
+    actions = get_actions(board);
     values = set()
     for action in actions:
         values.add(dictionary[(board, action)][0])
-    
-    return minMax(values)  
 
-def getTurn(turn):
+    return minMax(values)
+
+def get_turn(turn):
     return X if turn == O else O
 
-def invokeAction(index, ele, board):
+def invoke_action(index, ele, board):
     result = list(board[:])
     result[index] = ele
     return tuple(result)
 
-def getActions(board):
-    return [idx for idx, ele in enumerate(board) if ele == None] if board != () and not isGameOver(board) else []
+def get_actions(board):
+    #print(f"get_actions, board: {board}")
+    return [idx for idx, ele in enumerate(board) if ele is None] if board != () and not is_game_over(board) else []
 
-def isCat(board):
-    return len([ele for ele in board if ele != None]) == BOARD_LEN
+def is_cat(board):
+    return len([ele for ele in board if not ele is None]) == BOARD_LEN
 
-def isWin(board, char):
+def is_win(board, char):
     #horizontal wins
     return ((board[0] == char and board[1] == char and board[2] == char)
     or (board[3] == char and board[4] == char and board[5] == char)
@@ -123,11 +124,11 @@ def isWin(board, char):
     or  (board[0] == char and board[4] == char and board[8] == char)
     or  (board[2] == char and board[4] == char and board[6] == char))
 
-def isGameOver(board):
-    return isCat(board) or isWin(board, X) or isWin(board, O)
+def is_game_over(board):
+    return is_cat(board) or is_win(board, X) or is_win(board, O)
 
 #None space is unoccupied
 #x means x is in space
 #o means o is in space
-def generateBoard():
+def generate_board():
     return tuple([None for _ in range(BOARD_LEN)])
